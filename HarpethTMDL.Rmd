@@ -41,6 +41,8 @@ library(sf)
 library(kableExtra)
 library(knitr)
 library(wql)
+library(readxl)
+library(fasstr)
 
 time = lubridate::with_tz(Sys.time(), "CST6CDT")
 
@@ -54,7 +56,7 @@ This file was last updated on `r time`
 
 #Import Data
 
-library(readxl)
+
 Grab <- read_excel("GrabSamples.xlsx", 
     col_types = c("skip", "text", "text", 
         "skip", "skip", "date", "text", "numeric", 
@@ -62,6 +64,17 @@ Grab <- read_excel("GrabSamples.xlsx",
 
 head(Grab,15)
 
+BaseModel <- read_delim("Epa_Base_Model_2011_To_2020.txt", 
+     delim = "\t", escape_double = FALSE, 
+     col_types = cols(`Date-Time` = col_datetime(format = "%m/%d/%Y %H:%M"), 
+         CBOD = col_number(), DO = col_number(), 
+         FLOW_CMS = col_number(), NH3_N = col_number(), 
+         NO3O2 = col_number(), PHYTO = col_number(), 
+         SOD_T = col_number(), `SOLID-WS` = col_number(), 
+         TN = col_number(), TP = col_number(), 
+         WTEMP = col_number()), trim_ws = TRUE)
+
+View(BaseModel)
 
 
 
@@ -75,5 +88,28 @@ head(Grab,15)
 
 
 
+```{r, Format, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
+
+#Subset Data into Logical WASP Segments
+# HARPETH_1 = Mouth of the Harpeth
+# JONES_167 = Jones Creek
+# HARPETH_2 = Main Stem w/o Jones Creek
+# TURNBULL_143 = Turnbull Creek
+# S_HARPETH_124 = South Harpeth
+# HARPETH_34 = West Harpeth
+# HARPETH_62 = Upstream of Franklin STP
+# LSPC188PERO = Downstream of Franklin STP
+# LSPC183PERO = Headwaters
 
 
+
+
+
+
+sites=c("HARPETH_1","JONES_167","HARPETH_2", "TURNBULL_143", "S_HARPETH_124", "HARPETH_34", "LSPC188PERO", "LSPC183PERO")
+
+
+
+
+
+```
