@@ -5,26 +5,75 @@ date: "`r Sys.Date()`"
 output: github_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r, Intro, eval=TRUE}
+
+WASP.version<-8
+
+
+
 ```
 
-## R Markdown
+# Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+**Harpeth TMDL** --  Water Quality Analysis Simulation Program (WASP version `r WASP.version`)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Exploration of water quality data using the calibrated WASP models provided to TDEC and others by the EPA Region 4
 
-```{r cars}
-summary(cars)
+
+```{r, Setup, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE}
+#Load in required packages
+
+library(tidyverse)
+library(osmdata) 
+library(ggmap)
+library(dataRetrieval)
+library(XML)
+library(DT)
+library(dbplyr)
+library(widgetframe)
+library(rgdal)
+library(leaflet)
+library(plotly)
+library(formattable)
+library(htmltools)
+library(leaflet)
+library(sf)
+library(kableExtra)
+library(knitr)
+library(wql)
+
+time = lubridate::with_tz(Sys.time(), "CST6CDT")
+
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+This file was last updated on `r time`
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+```{r, Import Data, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
+
+#Import Data
+
+library(readxl)
+Grab <- read_excel("GrabSamples.xlsx", 
+    col_types = c("skip", "text", "text", 
+        "skip", "skip", "date", "text", "numeric", 
+        "text"))
+
+head(Grab,15)
+
+
+
+
+
+
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+`Grab` data table contains grab sample results collected from `r length(unique(Grab$Station_ID))` locations throughout the Harpeth River watershed
+
+
+
+
+
