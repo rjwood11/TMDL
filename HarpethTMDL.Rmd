@@ -102,11 +102,27 @@ View(BaseModel)
 # LSPC183PERO = Headwaters
 
 
+sites=c("HARPETH_1","JONES_167","HARPETH_2", "TURNBULL_143", "S_HARPETH_124", "HARPETH_34", "LSPC188PERO", "HARPETH_62", "LSPC183PERO")
+
+colnames(BaseModel)[1] <- "Date"
+
+
+BaseModel<-BaseModel[BaseModel$Station_ID==sites,]
+
+ggplot(data = BaseModel, aes(x = Date, y = TP, group = Station_ID, colour = Station_ID)) +
+    geom_line() +
+    facet_wrap(~ Station_ID)
+
+BaseModel$TPLoad<-BaseModel$TP*0.00220462*BaseModel$FLOW_CMS*86400
+
+BaseModel$TPLoad.csum <- ave(BaseModel$TPLoad, BaseModel$Station_ID, FUN=cumsum)
 
 
 
 
-sites=c("HARPETH_1","JONES_167","HARPETH_2", "TURNBULL_143", "S_HARPETH_124", "HARPETH_34", "LSPC188PERO", "LSPC183PERO")
+ggplot(data = BaseModel, aes(x = Date, y = TPLoad.csum, group = Station_ID, colour = Station_ID)) +
+    geom_line() +
+    facet_wrap(~ Station_ID)
 
 
 
