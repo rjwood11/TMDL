@@ -43,6 +43,8 @@ library(knitr)
 library(wql)
 library(readxl)
 library(fasstr)
+library(readr)
+library(ggplot2)
 
 time = lubridate::with_tz(Sys.time(), "CST6CDT")
 
@@ -74,10 +76,17 @@ BaseModel <- read_delim("Epa_Base_Model_2011_To_2020.txt",
          TN = col_number(), TP = col_number(), 
          WTEMP = col_number()), trim_ws = TRUE)
 
-View(BaseModel)
+head(BaseModel,15)
 
 
+Cont <- read_csv("Cont.csv", col_types = cols(...1 = col_skip(), 
+    Date_Time = col_datetime(format = "%Y-%m-%d %H:%M:%S"), 
+    Result = col_number()))
 
+head(Cont,15)
+
+
+unique(Grab[c(4,6)])
 
 
 
@@ -106,21 +115,37 @@ sites=c("HARPETH_1","JONES_167","HARPETH_2", "TURNBULL_143", "S_HARPETH_124", "H
 
 colnames(BaseModel)[1] <- "Date"
 
+colnames(Grab)[3] <- "Date"
+
+colnames(Cont)[2] <- "Date"
 
 BaseModel<-BaseModel[BaseModel$Station_ID==sites,]
 
-ggplot(data = BaseModel, aes(x = Date, y = TP, group = Station_ID, colour = Station_ID)) +
-    geom_line() +
-    facet_wrap(~ Station_ID)
 
 BaseModel$TPLoad<-BaseModel$TP*0.00220462*BaseModel$FLOW_CMS*86400
 
 BaseModel$TPLoad.csum <- ave(BaseModel$TPLoad, BaseModel$Station_ID, FUN=cumsum)
 
+#####################################################################################################
+
+molten.data <- melt(Grab, id = c("Date","Station_ID","Pcode","Units","DataSource"))
+
+Grab.w<-dcast(molten.data, Date+Station_ID~Pcode, mean)
+
+
+head(Grab.w, 10)
 
 
 
-ggplot(data = BaseModel, aes(x = Date, y = TPLoad.csum, group = Station_ID, colour = Station_ID)) +
+```
+
+#Data Summary
+
+Subset of `r length(unique(BaseModel$Station_ID))` modeled segments in WASP
+
+```{r, Format, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
+
+ggplot(data = BaseModel, aes(x = Date, y = FLOW_CMS, group = Station_ID, colour = Station_ID)) +
     geom_line() +
     facet_wrap(~ Station_ID)
 
@@ -128,4 +153,64 @@ ggplot(data = BaseModel, aes(x = Date, y = TPLoad.csum, group = Station_ID, colo
 
 
 
+
+ggplot(data = BaseModel, aes(x = Date, y = TPLoad, group = Station_ID, colour = Station_ID, )) +
+  ylab("TP Load (lbs/day)") +
+    geom_line() +
+    facet_wrap(~ Station_ID)
+
+
+#Boxplot - look at data distribution
+
+
+
+tp<-ggplot(BaseModel, aes(x = Station_ID, y = TN, fill = Station_ID)) + 
+  geom_boxplot(outlier.colour="black", outlier.shape=16, outlier.size=2) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ylab("TP (mg/L)")
+
+tp
+
+
+tn<-ggplot(BaseModel, aes(x = Station_ID, y = TN, fill = Station_ID)) + 
+  geom_boxplot(outlier.colour="black", outlier.shape=16, outlier.size=2) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ylab("TN (mg/L)")
+
+tn
+
+
+
 ```
+
+
+```{r, Data Comparison, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
+
+LSPC188_tp<-ggplot(BaseModel,aes(x=Date,y=TP))+geom_line(data=subset(BaseModel,Station_ID=="HARPETH_1")) +theme_bw()+
+  labs(y="TP (mg/L)")+ylim(min(BaseModel$TP),max(BaseModel$TP))+
+  theme(
+    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
+    axis.text.x=element_blank(),axis.title.x=element_blank(), 
+    panel.border = element_rect(size=.8, colour = "black"))+
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TP, fill=Station_ID))
+
+LSPC188_tp
+
+
+
+
+
+
+
+
+
+ppi=300
+#png("awesome stacked time series.png",width=12*ppi, height=8*ppi, res=ppi)
+grid.arrange(cc.temp,cc.sal,cc.do,cc.pH, ncol=1)
+dev.off()
+
+
+```
+
+
+
