@@ -48,6 +48,8 @@ library(ggplot2)
 library(gridExtra)
 library(grid)
 library(lattice)
+library(reshape)
+library(reshape2)
 
 time = lubridate::with_tz(Sys.time(), "CST6CDT")
 
@@ -146,7 +148,7 @@ head(Grab.w, 10)
 
 Subset of `r length(unique(BaseModel$Station_ID))` modeled segments in WASP
 
-```{r, Format, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
+```{r, Basic Plots, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
 
 ggplot(data = BaseModel, aes(x = Date, y = FLOW_CMS, group = Station_ID, colour = Station_ID)) +
     geom_line() +
@@ -216,7 +218,7 @@ HARPETH_62
 ppi=300
 #png("awesome stacked time series.png",width=12*ppi, height=8*ppi, res=ppi)
 grid.arrange(LSPC188_tp,HARPETH_62, ncol=1)
-dev.off()
+#dev.off()
 
 
 ```
