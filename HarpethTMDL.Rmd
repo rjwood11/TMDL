@@ -45,6 +45,9 @@ library(readxl)
 library(fasstr)
 library(readr)
 library(ggplot2)
+library(gridExtra)
+library(grid)
+library(lattice)
 
 time = lubridate::with_tz(Sys.time(), "CST6CDT")
 
@@ -186,27 +189,33 @@ tn
 
 ```{r, Data Comparison, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
 
-LSPC188_tp<-ggplot(BaseModel,aes(x=Date,y=TP))+geom_line(data=subset(BaseModel,Station_ID=="HARPETH_1")) +theme_bw()+
+LSPC188_tp<-ggplot(BaseModel,aes(x=Date,y=TP))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
   labs(y="TP (mg/L)")+ylim(min(BaseModel$TP),max(BaseModel$TP))+
   theme(
     axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
     axis.text.x=element_blank(),axis.title.x=element_blank(), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TP, fill=Station_ID))
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TP, color=Station_ID))
 
 LSPC188_tp
 
+HARPETH_62<-ggplot(BaseModel,aes(x=Date,y=TP))+geom_line(data=subset(BaseModel,Station_ID=="HARPETH_62")) +theme_bw()+
+  labs(y="TP (mg/L)")+ylim(min(BaseModel$TP),max(BaseModel$TP))+
+  theme(
+    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
+    axis.text.x=element_blank(),axis.title.x=element_blank(), 
+    panel.border = element_rect(size=.8, colour = "black"))+
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Up","Frank_Eff","Franklin_Site_1")), aes(x=Date, y=TP, color=Station_ID))
 
 
-
-
+HARPETH_62
 
 
 
 
 ppi=300
 #png("awesome stacked time series.png",width=12*ppi, height=8*ppi, res=ppi)
-grid.arrange(cc.temp,cc.sal,cc.do,cc.pH, ncol=1)
+grid.arrange(LSPC188_tp,HARPETH_62, ncol=1)
 dev.off()
 
 
