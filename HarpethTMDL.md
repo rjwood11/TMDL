@@ -1,7 +1,7 @@
 HarpethTMDL
 ================
 RJ
-2022-07-14
+2022-07-15
 
 ``` r
 WASP.version<-8
@@ -45,11 +45,12 @@ library(grid)
 library(lattice)
 library(reshape)
 library(reshape2)
+library(forecast)
 
 time = lubridate::with_tz(Sys.time(), "CST6CDT")
 ```
 
-This file was last updated on 2022-07-14 14:43:33
+This file was last updated on 2022-07-15 14:53:11
 
 ``` r
 #Import Data
@@ -137,6 +138,43 @@ head(Cont,15)
 ## 15 USGS_03432390 2012-01-27 18:00:00 TEMPWC   12.6 degC
 
 
+
+Natural <- read_delim("NATURAL_MODEL_2011_To_2020.txt", 
+    delim = "\t", escape_double = FALSE, 
+    col_types = cols(`Date-Time` = col_datetime(format = "%m/%d/%Y %H:%M"), 
+        CBOD90 = col_number(), DIP = col_number(), 
+        DO = col_number(), DON = col_number(), 
+        DOP = col_number(), FLOW_CMS = col_number(), 
+        NH3_N = col_number(), NO3O2 = col_number(), 
+        PHYTO = col_number(), PON = col_number(), 
+        SOD_T = col_number(), TKN = col_number(), 
+        TN = col_number(), TP = col_number(), 
+        WTEMP = col_number()), trim_ws = TRUE)
+
+head(Natural,15)
+## # A tibble: 15 × 17
+##    `Date-Time`         Station_ID   CBOD90    DIP    DO    DON    DOP FLOW_CMS
+##    <dttm>              <chr>         <dbl>  <dbl> <dbl>  <dbl>  <dbl>    <dbl>
+##  1 2011-01-01 00:00:00 ARKANSAS_131   0    0       0    0      0         0.210
+##  2 2011-01-02 00:06:00 ARKANSAS_131   2.38 0.0968  7.18 0.0193 0.0107    0.208
+##  3 2011-01-03 00:04:00 ARKANSAS_131   2.38 0.0948 10.7  0.0193 0.0107    0.208
+##  4 2011-01-04 00:02:00 ARKANSAS_131   2.38 0.0949 10.6  0.0193 0.0107    0.208
+##  5 2011-01-04 23:59:00 ARKANSAS_131   2.38 0.0951 10.6  0.0193 0.0107    0.208
+##  6 2011-01-06 00:05:00 ARKANSAS_131   2.38 0.0953 10.6  0.0193 0.0107    0.208
+##  7 2011-01-07 00:02:00 ARKANSAS_131   2.38 0.0954 10.6  0.0193 0.0107    0.208
+##  8 2011-01-08 00:00:00 ARKANSAS_131   2.38 0.0956 10.6  0.0193 0.0107    0.208
+##  9 2011-01-09 00:06:00 ARKANSAS_131   2.38 0.0957 10.6  0.0193 0.0107    0.208
+## 10 2011-01-10 00:03:00 ARKANSAS_131   2.38 0.0958 10.6  0.0193 0.0107    0.208
+## 11 2011-01-11 00:00:00 ARKANSAS_131   2.38 0.0960 10.6  0.0193 0.0107    0.208
+## 12 2011-01-12 00:06:00 ARKANSAS_131   2.38 0.0961 10.6  0.0193 0.0107    0.208
+## 13 2011-01-13 00:04:00 ARKANSAS_131   2.38 0.0962 10.6  0.0193 0.0107    0.208
+## 14 2011-01-14 00:01:00 ARKANSAS_131   2.38 0.0963 10.6  0.0193 0.0107    0.208
+## 15 2011-01-14 23:58:00 ARKANSAS_131   2.38 0.0964 10.6  0.0193 0.0107    0.208
+## # … with 9 more variables: NH3_N <dbl>, NO3O2 <dbl>, PHYTO <dbl>, PON <dbl>,
+## #   SOD_T <dbl>, TKN <dbl>, TN <dbl>, TP <dbl>, WTEMP <dbl>
+
+
+
 unique(Grab[c(4,6)])
 ## # A tibble: 52 × 2
 ##    Pcode    Units     
@@ -178,6 +216,8 @@ colnames(Grab)[3] <- "Date"
 
 colnames(Cont)[2] <- "Date"
 
+colnames(Natural)[1] <- "Date"
+
 BaseModel<-BaseModel[BaseModel$Station_ID==sites,]
 
 
@@ -185,12 +225,15 @@ BaseModel$TPLoad<-BaseModel$TP*0.00220462*BaseModel$FLOW_CMS*86400
 
 BaseModel$TPLoad.csum <- ave(BaseModel$TPLoad, BaseModel$Station_ID, FUN=cumsum)
 
+BaseModel$NP<-BaseModel$TN/BaseModel$TP
+
 #####################################################################################################
 
 molten.data <- melt(Grab, id = c("Date","Station_ID","Pcode","Units","DataSource"))
 
 Grab.w<-dcast(molten.data, Date+Station_ID~Pcode, mean)
 
+Grab.w$NP<-Grab.w$TN/Grab.w$TP
 
 head(Grab.w, 10)
 ##                   Date             Station_ID ALK BOD30 BOD5 CBOD30 CBOD5
@@ -237,17 +280,36 @@ head(Grab.w, 10)
 ## 8      NaN     NaN      NaN      NaN 7.41    NaN   NaN NaN    NaN NaN NaN
 ## 9      NaN     NaN      NaN      NaN 8.31    NaN   NaN NaN    NaN NaN NaN
 ## 10     NaN     NaN      NaN      NaN 8.59    NaN   NaN NaN    NaN NaN NaN
-##    TEMPWC   TKN  TN    TP  TS TSS TURB
-## 1    0.40   NaN NaN   NaN NaN NaN  NaN
-## 2    4.33 0.065 NaN 0.006 NaN   5 0.68
-## 3    6.16 0.065 NaN 0.210 NaN   5 3.07
-## 4    2.61 0.065 NaN 0.013 NaN   5 0.32
-## 5    6.36 0.200 NaN 0.210 NaN   5 2.81
-## 6    6.19 0.065 NaN 0.044 NaN   5 0.74
-## 7    3.39 0.065 NaN 0.082 NaN   5 1.75
-## 8    4.62 0.065 NaN 0.230 NaN   5 1.36
-## 9    4.60 0.065 NaN 0.210 NaN   5 0.52
-## 10   5.46 0.200 NaN 0.033 NaN   5 0.88
+##    TEMPWC   TKN  TN    TP  TS TSS TURB  NP
+## 1    0.40   NaN NaN   NaN NaN NaN  NaN NaN
+## 2    4.33 0.065 NaN 0.006 NaN   5 0.68 NaN
+## 3    6.16 0.065 NaN 0.210 NaN   5 3.07 NaN
+## 4    2.61 0.065 NaN 0.013 NaN   5 0.32 NaN
+## 5    6.36 0.200 NaN 0.210 NaN   5 2.81 NaN
+## 6    6.19 0.065 NaN 0.044 NaN   5 0.74 NaN
+## 7    3.39 0.065 NaN 0.082 NaN   5 1.75 NaN
+## 8    4.62 0.065 NaN 0.230 NaN   5 1.36 NaN
+## 9    4.60 0.065 NaN 0.210 NaN   5 0.52 NaN
+## 10   5.46 0.200 NaN 0.033 NaN   5 0.88 NaN
+
+
+
+molten.cont <- melt(Cont, id = c("Date","Station_ID","Pcode","Units"))
+
+Cont.w<-dcast(molten.cont, Date+Station_ID~Pcode, mean)
+
+head(Cont.w, 10)
+##          Date    Station_ID COND  DO DOSAT FLOW_CFS    FLOW_CMS  PH TEMPWC TURB
+## 1  2011-01-01 USGS_03432350  NaN NaN   NaN   828.00 23.44634932 NaN    NaN  NaN
+## 2  2011-01-01 USGS_03432400  NaN NaN   NaN   919.00 26.02318239 NaN    NaN  NaN
+## 3  2011-01-01 USGS_03433500  NaN NaN   NaN   456.00 12.91248223 NaN    NaN  NaN
+## 4  2011-01-01 USGS_03433640  NaN NaN   NaN     3.83  0.10845352 NaN    NaN  NaN
+## 5  2011-01-01 USGS_03434500  NaN NaN   NaN   464.00 13.13901701 NaN    NaN  NaN
+## 6  2011-01-02 USGS_03432350  NaN NaN   NaN  1020.00 28.88318394 NaN    NaN  NaN
+## 7  2011-01-02 USGS_03432400  NaN NaN   NaN  1330.00 37.66140651 NaN    NaN  NaN
+## 8  2011-01-02 USGS_03433500  NaN NaN   NaN  2220.00 62.86340034 NaN    NaN  NaN
+## 9  2011-01-02 USGS_03433640  NaN NaN   NaN     1.44  0.04077626 NaN    NaN  NaN
+## 10 2011-01-02 USGS_03434500  NaN NaN   NaN  2130.00 60.31488411 NaN    NaN  NaN
 ```
 
 \#Data Summary
@@ -282,7 +344,7 @@ ggplot(data = BaseModel, aes(x = Date, y = TPLoad, group = Station_ID, colour = 
 
 
 
-tp<-ggplot(BaseModel, aes(x = Station_ID, y = TN, fill = Station_ID)) + 
+tp<-ggplot(BaseModel, aes(x = Station_ID, y = TP, fill = Station_ID)) + 
   geom_boxplot(outlier.colour="black", outlier.shape=16, outlier.size=2) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   ylab("TP (mg/L)")
@@ -305,45 +367,153 @@ tn
 ![](HarpethTMDL_files/figure-gfm/Basic%20Plots-4.png)<!-- -->
 
 ``` r
-LSPC188_tp<-ggplot(BaseModel,aes(x=Date,y=TP))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
+
+np<-ggplot(BaseModel, aes(x = Station_ID, y = NP, fill = Station_ID)) + 
+  geom_boxplot(outlier.colour="black", outlier.shape=16, outlier.size=2) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ylab("TN:TP Ratio")
+
+np
+```
+
+![](HarpethTMDL_files/figure-gfm/Basic%20Plots-5.png)<!-- -->
+
+``` r
+LSPC188_tp<-ggplot(BaseModel,aes(x=Date,y=TP, color="Base Model"))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
   labs(y="TP (mg/L)")+ylim(min(BaseModel$TP),max(BaseModel$TP))+
   theme(
-    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
+    axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_blank(),axis.title.x=element_blank(), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TP, color=Station_ID))
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TP, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=TP, color="Natural"))
 
-LSPC188_tp
+#LSPC188_tp
+
+LSPC188_tn<-ggplot(BaseModel,aes(x=Date,y=TN))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
+  labs(y="TN (mg/L)")+ylim(min(BaseModel$TN),max(BaseModel$TN))+
+  theme(
+    axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
+    axis.text.x=element_blank(),axis.title.x=element_blank(), 
+    panel.border = element_rect(size=.8, colour = "black"))+
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TN, color=Station_ID))
+
+#LSPC188_tn
+
+LSPC188_flow<-ggplot(BaseModel,aes(x=Date,y=FLOW_CMS))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
+  labs(y="Flow (cms)")+ylim(min(BaseModel$FLOW_CMS),200)+
+  theme(
+    axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
+    axis.text.x=element_blank(),axis.title.x=element_blank(), 
+    panel.border = element_rect(size=.8, colour = "black"))+
+  geom_point(data=subset(Cont.w, Station_ID==c("USGS_03432400")), aes(x=Date, y=FLOW_CMS, color=Station_ID))
+
+#LSPC188_flow
+
+
+
+LSPC188_np<-ggplot(BaseModel,aes(x=Date,y=NP))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
+  labs(y="TN:TP ratio", x="Date")+ylim(min(BaseModel$NP),max(BaseModel$NP))+
+  theme(
+    axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
+    axis.text.x=element_text(size=11),axis.title.x=element_text(size=11), 
+    panel.border = element_rect(size=.8, colour = "black"))+
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=NP, color=Station_ID))
+
+#LSPC188_np
+
+grid.arrange(LSPC188_tp,LSPC188_tn,LSPC188_flow,LSPC188_np, ncol=1,padding=100)
 ```
 
 ![](HarpethTMDL_files/figure-gfm/Data%20Comparison-1.png)<!-- -->
 
 ``` r
+
 HARPETH_62<-ggplot(BaseModel,aes(x=Date,y=TP))+geom_line(data=subset(BaseModel,Station_ID=="HARPETH_62")) +theme_bw()+
   labs(y="TP (mg/L)")+ylim(min(BaseModel$TP),max(BaseModel$TP))+
   theme(
-    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
+    axis.text.y=element_text(size=16),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_blank(),axis.title.x=element_blank(), 
     panel.border = element_rect(size=.8, colour = "black"))+
   geom_point(data=subset(Grab.w, Station_ID==c("Frank_Up","Frank_Eff","Franklin_Site_1")), aes(x=Date, y=TP, color=Station_ID))
 
 
-HARPETH_62
-```
-
-![](HarpethTMDL_files/figure-gfm/Data%20Comparison-2.png)<!-- -->
-
-``` r
+#HARPETH_62
 
 
 
-ppi=300
+
+
+
+
+#ppi=300
 #png("awesome stacked time series.png",width=12*ppi, height=8*ppi, res=ppi)
-grid.arrange(LSPC188_tp,HARPETH_62, ncol=1)
+#grid.arrange(LSPC188_tp,HARPETH_62, ncol=1)
+#dev.off()
 ```
 
-![](HarpethTMDL_files/figure-gfm/Data%20Comparison-3.png)<!-- -->
+``` r
+
+monthOrder <- c('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+BaseModel$Month <- factor(format(BaseModel$Date, "%b"), levels = monthOrder)
+BaseModel$Year <- factor(format(BaseModel$Date, "%Y"))
+ggplot(BaseModel, aes(Month, TPLoad)) + geom_boxplot(data=subset(BaseModel,Station_ID=="LSPC188PERO")) + stat_boxplot(geom ='errorbar') + ggtitle("TP Load (lbs/day)")
+```
+
+![](HarpethTMDL_files/figure-gfm/Seasonal%20Trends-1.png)<!-- -->
 
 ``` r
-#dev.off()
+ggplot(BaseModel,aes(Month,TPLoad)) + geom_bar(stat="identity") + ggtitle("TP Load (lbs/month)")
+```
+
+![](HarpethTMDL_files/figure-gfm/Seasonal%20Trends-2.png)<!-- -->
+
+``` r
+##################
+
+#LSPC188_tpload <- subset(BaseModel, Station_ID==c("LSPC188PERO","HARPETH_62"), select=c(Station_ID, Year, Month, TPLoad))
+#meanTPLoad_62 <- subset(BaseModel, Station_ID=="HARPETH_62", select=c(Station_ID, Year, Month, TPLoad))
+#meanTPLoad_188 <- subset(BaseModel, Station_ID=="LSPC188PERO", select=c(Station_ID, Year, Month, TPLoad))
+
+#library(plyr)
+#tpload62<-ddply(meanTPLoad_62, c("Month","Station_ID"), summarise, x = mean(TPLoad))
+
+#meanTPLoad_62 <- join(meanTPLoad_62, tpload62, match="all")
+
+
+
+
+
+
+#ggplot(LSPC188_tpload,aes(Year,TPLoad,colour=Station_ID)) +
+#geom_point(data=LSPC188_tpload,size=I(2),alpha=I(0.6)) + 
+#geom_line(data=meanTPLoad_62, aes(Month,x), size=I(1.5),alpha=I(0.6)) + 
+##geom_line(data=mean(meanTPLoad_62$TPLoad),size=I(1.5),alpha=I(0.4)) + 
+#theme_grey(base_size=15) +
+#theme(legend.title = element_blank(), legend.position=c(.85,.85), axis.title.y=element_blank(),axis.text.x=element_blank()) + 
+#ggtitle("TP Load (lbs/day)") + facet_grid(. ~ Month) + 
+#xlab(paste("Years: 2011 to 2019"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+#theme_set(theme_classic())
+
+#BaseModel$Date.ts<-as.ts(BaseModel$Date)
+
+# Subset data
+#Base_LSPC188 <- window(subset(BaseModel,Station_ID=="LSPC188PERO"), start=c(2012, 1), end=c(2019, 8))  # subset a smaller timewindow
+
+# Plot
+#ggseasonplot(subset(BaseModel,Station_ID=="LSPC188PERO"), x=BaseModel$Date.ts) + labs(title="Seasonal plot: International Airline Passengers")
+#ggseasonplot(subset(BaseModel,Station_ID=="LSPC188PERO")) + labs(title="Seasonal plot: Air temperatures at Nottingham Castle")
 ```
