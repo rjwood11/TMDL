@@ -440,4 +440,46 @@ p
 
 ```
 
+```{r, Probability Graphs, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE}
+
+DF <- melt(BaseModel, id=c("Date","Station_ID"))
+
+
+ggplot(BaseModel, aes(x = TP, col = Station_ID))+
+   stat_ecdf(lwd = 1.2)+
+  geom_hline(yintercept=c(.95,0.75), color="black")+
+  xlim(0,1.2)+
+  geom_vline(xintercept = c(0.62,0.34))+labs(title="Base Model - EPA",
+        x ="TP (mg/L)", y = "Probability of Occurence")
+  
+  
+ggplot(Natural, aes(x=TP, col=Station_ID))+
+  stat_ecdf(lwd=1.2)+
+  geom_hline(yintercept=c(.95,0.75), color="black")+
+  xlim(0,1.2)+labs(title="Model - Natural",
+        x ="TP (mg/L)", y = "Probability of Occurence")
+
+```
+
+TP concentrations and NP ratios visualized with cumulative distribution frequency
+
+
+```{r, NP Ratios}
+
+ggplot(BaseModel, aes(x = NP, col = Station_ID))+
+   stat_ecdf(lwd = 1.2)+
+  geom_hline(yintercept=c(.95,0.75), color="black")+
+  xlim(0,10)+
+  geom_vline(xintercept = c(5,3.1))+labs(title="Base Model - EPA",
+        x ="NP Ratios", y = "Probability of Occurence")
+  
+  
+ggplot(Natural, aes(x=NP, col=Station_ID))+
+  stat_ecdf(lwd=1.2)+
+  geom_hline(yintercept=c(.95,0.75), color="black")+
+  xlim(0,10)+labs(title="Model - Natural",
+        x ="NP Ratios", y = "Probability of Occurence")
+
+
+```
 
