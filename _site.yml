@@ -1,13 +1,11 @@
   name: "Harpeth TMDL"
   output_dir: "."
   navbar:
-    title: "Cars"
+    title: "Harpeth TMDL"
     left:
     - text: "Home"
         href: index.html
-    - text: "About"
-        href: about.html
   output:
     html_document:
-      theme: simplex
+      theme: minimal
       
