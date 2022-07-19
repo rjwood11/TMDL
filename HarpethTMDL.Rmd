@@ -86,6 +86,7 @@ BaseModel <- read_delim("Epa_Base_Model_2011_To_2020.txt",
 head(BaseModel,15)
 
 
+
 Cont <- read_csv("Cont.csv", col_types = cols(...1 = col_skip(), 
     Date_Time = col_datetime(format = "%Y-%m-%d %H:%M:%S"), 
     Result = col_number()))
@@ -148,6 +149,14 @@ sites=c("HARPETH_1","JONES_167","HARPETH_2", "TURNBULL_143", "S_HARPETH_124", "H
 
 colnames(BaseModel)[1] <- "Date"
 
+BaseModel$TPLoad<-BaseModel$TP*0.00220462*BaseModel$FLOW_CMS*86400
+
+BaseModel$TPLoad.csum <- ave(BaseModel$TPLoad, BaseModel$Station_ID, FUN=cumsum)
+
+BaseModel$NP<-BaseModel$TN/BaseModel$TP
+
+BaseModel1<-BaseModel
+
 colnames(Grab)[3] <- "Date"
 
 colnames(Cont)[2] <- "Date"
@@ -157,11 +166,7 @@ colnames(Natural)[1] <- "Date"
 BaseModel<-BaseModel[BaseModel$Station_ID==sites,]
 
 
-BaseModel$TPLoad<-BaseModel$TP*0.00220462*BaseModel$FLOW_CMS*86400
 
-BaseModel$TPLoad.csum <- ave(BaseModel$TPLoad, BaseModel$Station_ID, FUN=cumsum)
-
-BaseModel$NP<-BaseModel$TN/BaseModel$TP
 
 #####################################################################################################
 
@@ -376,4 +381,20 @@ ggplot(BaseModel,aes(Month,TPLoad)) + geom_bar(stat="identity") + ggtitle("TP Lo
 
 ```
 
+```{r, Plotly, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}}
+
+plot_ly( data = BaseModel1, x = BaseModel1$Date, y = BaseModel1$DO) %>% 
+  add_trace(type = "scatter" ,mode = "lines+markers")  %>% 
+  layout(
+    title = "Time Series of DO",
+    xaxis = list(
+      title = "Year"),
+    yaxis = list(
+      title = "DO (mg/L"))
+
+
+
+
+
+```
 
