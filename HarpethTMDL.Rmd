@@ -23,6 +23,7 @@ Exploration of water quality data using the calibrated WASP models provided to T
 ```{r, Setup, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE}
 #Load in required packages
 
+library(yaml)
 library(tidyverse)
 library(osmdata) 
 library(ggmap)
