@@ -51,7 +51,7 @@ library(forecast)
 time = lubridate::with_tz(Sys.time(), "CST6CDT")
 ```
 
-This file was last updated on 2022-07-19 10:30:48
+This file was last updated on 2022-07-19 12:39:47
 
 ``` r
 #Import Data
@@ -114,6 +114,7 @@ head(BaseModel,15)
 ## # … with 4 more variables: `SOLID-WS` <dbl>, TN <dbl>, TP <dbl>, WTEMP <dbl>,
 ## #   and abbreviated variable name ¹​FLOW_CMS
 ## # ℹ Use `colnames()` to see all variable names
+
 
 
 Cont <- read_csv("Cont.csv", col_types = cols(...1 = col_skip(), 
@@ -218,20 +219,31 @@ sites=c("HARPETH_1","JONES_167","HARPETH_2", "TURNBULL_143", "S_HARPETH_124", "H
 
 colnames(BaseModel)[1] <- "Date"
 
+BaseModel$TPLoad<-BaseModel$TP*0.00220462*BaseModel$FLOW_CMS*86400
+
+BaseModel$TPLoad.csum <- ave(BaseModel$TPLoad, BaseModel$Station_ID, FUN=cumsum)
+
+BaseModel$NP<-BaseModel$TN/BaseModel$TP
+
+BaseModel1<-BaseModel
+
 colnames(Grab)[3] <- "Date"
 
 colnames(Cont)[2] <- "Date"
 
 colnames(Natural)[1] <- "Date"
 
-BaseModel<-BaseModel[BaseModel$Station_ID==sites,]
 
 
-BaseModel$TPLoad<-BaseModel$TP*0.00220462*BaseModel$FLOW_CMS*86400
+Natural$NP<-Natural$TN/Natural$TP
 
-BaseModel$TPLoad.csum <- ave(BaseModel$TPLoad, BaseModel$Station_ID, FUN=cumsum)
+Natural$TPLoad<-Natural$TP*0.00220462*Natural$FLOW_CMS*86400
 
-BaseModel$NP<-BaseModel$TN/BaseModel$TP
+Natural$TPLoad.csum <- ave(Natural$TPLoad, Natural$Station_ID, FUN=cumsum)
+
+Natural1<-Natural
+
+Natural<-Natural[Natural$Station_ID==sites,]
 
 #####################################################################################################
 
@@ -320,7 +332,7 @@ head(Cont.w, 10)
 
 \#Data Summary
 
-Subset of 9 modeled segments in WASP
+Subset of 185 modeled segments in WASP
 
 ``` r
 ggplot(data = BaseModel, aes(x = Date, y = FLOW_CMS, group = Station_ID, colour = Station_ID)) +
@@ -402,7 +414,8 @@ LSPC188_tn<-ggplot(BaseModel,aes(x=Date,y=TN))+geom_line(data=subset(BaseModel,S
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_blank(),axis.title.x=element_blank(), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TN, color=Station_ID))
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TN, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=TN, color="Natural"))
 
 #LSPC188_tn
 
@@ -412,7 +425,8 @@ LSPC188_flow<-ggplot(BaseModel,aes(x=Date,y=FLOW_CMS))+geom_line(data=subset(Bas
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_blank(),axis.title.x=element_blank(), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Cont.w, Station_ID==c("USGS_03432400")), aes(x=Date, y=FLOW_CMS, color=Station_ID))
+  geom_point(data=subset(Cont.w, Station_ID==c("USGS_03432400")), aes(x=Date, y=FLOW_CMS, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=FLOW_CMS, color="Natural"))
 
 #LSPC188_flow
 
@@ -424,7 +438,8 @@ LSPC188_np<-ggplot(BaseModel,aes(x=Date,y=NP))+geom_line(data=subset(BaseModel,S
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_text(size=11),axis.title.x=element_text(size=11), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=NP, color=Station_ID))
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=NP, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=NP, color="Natural"))
 
 #LSPC188_np
 
@@ -523,3 +538,97 @@ ggplot(BaseModel,aes(Month,TPLoad)) + geom_bar(stat="identity") + ggtitle("TP Lo
 #ggseasonplot(subset(BaseModel,Station_ID=="LSPC188PERO"), x=BaseModel$Date.ts) + labs(title="Seasonal plot: International Airline Passengers")
 #ggseasonplot(subset(BaseModel,Station_ID=="LSPC188PERO")) + labs(title="Seasonal plot: Air temperatures at Nottingham Castle")
 ```
+
+``` r
+p <- ggplot(data=BaseModel1, aes(x=Date, y=TP, color=Station_ID)) +
+  geom_line(data=subset(BaseModel1,Station_ID=="LSPC188PERO")) + 
+  xlab("Year") +
+  geom_line(data=subset(BaseModel1, Station_ID==sites))
+
+p
+```
+
+![](HarpethTMDL_files/figure-gfm/TP-1.png)<!-- -->
+
+``` r
+library(dygraphs)
+```
+
+    ## Warning: package 'dygraphs' was built under R version 4.2.1
+
+``` r
+library(xts)          # To make the convertion data-frame / xts format
+```
+
+    ## Warning: package 'xts' was built under R version 4.2.1
+
+    ## Loading required package: zoo
+
+    ## Warning: package 'zoo' was built under R version 4.2.1
+
+    ## 
+    ## Attaching package: 'zoo'
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     as.Date, as.Date.numeric
+
+    ## 
+    ## Attaching package: 'xts'
+
+    ## The following object is masked from 'package:leaflet':
+    ## 
+    ##     addLegend
+
+    ## The following objects are masked from 'package:dplyr':
+    ## 
+    ##     first, last
+
+``` r
+library(tidyverse)
+library(lubridate)
+```
+
+    ## 
+    ## Attaching package: 'lubridate'
+
+    ## The following object is masked from 'package:reshape':
+    ## 
+    ##     stamp
+
+    ## The following object is masked from 'package:wql':
+    ## 
+    ##     years
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     date, intersect, setdiff, union
+
+``` r
+library(zoo)
+
+LSPC188.base<-subset(BaseModel1,Station_ID=="LSPC188PERO")
+dy.tpload <- xts(x = LSPC188.base$TPLoad, order.by = LSPC188.base$Date)
+
+LSPC188.natural<-subset(Natural1,Station_ID=="LSPC188PERO")
+dy.Nattpload <- xts(x = LSPC188.natural$TPLoad, order.by = LSPC188.natural$Date)
+
+LSPC188.tpload<-cbind(dy.tpload,dy.Nattpload)
+
+
+LSPC188.tpload <- na.locf(LSPC188.tpload)
+
+p <- dygraph(LSPC188.tpload) %>%
+  dySeries("dy.tpload", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
+  dySeries("dy.Nattpload", drawPoints= T, color="blue") %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(3, "Set2")) %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+
+p
+```
+
+![](HarpethTMDL_files/figure-gfm/DyGraphs-1.png)<!-- -->

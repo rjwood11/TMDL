@@ -2,7 +2,8 @@
 title: "HarpethTMDL"
 author: "RJ"
 date: "`r Sys.Date()`"
-output: github_document
+output: html_document
+always_allow_html: true
 ---
 
 ```{r, Intro, eval=TRUE}
@@ -52,6 +53,10 @@ library(lattice)
 library(reshape)
 library(reshape2)
 library(forecast)
+library(dygraphs)
+library(xts)          # To make the convertion data-frame / xts format
+library(lubridate)
+library(zoo)
 
 time = lubridate::with_tz(Sys.time(), "CST6CDT")
 
@@ -157,16 +162,25 @@ BaseModel$NP<-BaseModel$TN/BaseModel$TP
 
 BaseModel1<-BaseModel
 
+BaseModel<-BaseModel[BaseModel$Station_ID==sites,]
+
 colnames(Grab)[3] <- "Date"
 
 colnames(Cont)[2] <- "Date"
 
 colnames(Natural)[1] <- "Date"
 
-BaseModel<-BaseModel[BaseModel$Station_ID==sites,]
 
 
+Natural$NP<-Natural$TN/Natural$TP
 
+Natural$TPLoad<-Natural$TP*0.00220462*Natural$FLOW_CMS*86400
+
+Natural$TPLoad.csum <- ave(Natural$TPLoad, Natural$Station_ID, FUN=cumsum)
+
+Natural1<-Natural
+
+Natural<-Natural[Natural$Station_ID==sites,]
 
 #####################################################################################################
 
@@ -263,7 +277,8 @@ LSPC188_tn<-ggplot(BaseModel,aes(x=Date,y=TN))+geom_line(data=subset(BaseModel,S
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_blank(),axis.title.x=element_blank(), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TN, color=Station_ID))
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TN, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=TN, color="Natural"))
 
 #LSPC188_tn
 
@@ -273,7 +288,8 @@ LSPC188_flow<-ggplot(BaseModel,aes(x=Date,y=FLOW_CMS))+geom_line(data=subset(Bas
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_blank(),axis.title.x=element_blank(), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Cont.w, Station_ID==c("USGS_03432400")), aes(x=Date, y=FLOW_CMS, color=Station_ID))
+  geom_point(data=subset(Cont.w, Station_ID==c("USGS_03432400")), aes(x=Date, y=FLOW_CMS, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=FLOW_CMS, color="Natural"))
 
 #LSPC188_flow
 
@@ -285,7 +301,8 @@ LSPC188_np<-ggplot(BaseModel,aes(x=Date,y=NP))+geom_line(data=subset(BaseModel,S
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_text(size=11),axis.title.x=element_text(size=11), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=NP, color=Station_ID))
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=NP, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=NP, color="Natural"))
 
 #LSPC188_np
 
@@ -380,3 +397,47 @@ ggplot(BaseModel,aes(Month,TPLoad)) + geom_bar(stat="identity") + ggtitle("TP Lo
 
 
 ```
+
+```{r, TP, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE}
+
+p <- ggplot(data=BaseModel1, aes(x=Date, y=TP, color=Station_ID)) +
+  geom_line(data=subset(BaseModel1,Station_ID=="LSPC188PERO")) + 
+  xlab("Year") +
+  geom_line(data=subset(BaseModel1, Station_ID==sites))
+
+p
+
+```
+
+```{r, DyGraphs}
+
+
+
+LSPC188.base<-subset(BaseModel1,Station_ID=="LSPC188PERO")
+dy.tpload <- xts(x = LSPC188.base$TPLoad, order.by = LSPC188.base$Date)
+
+LSPC188.natural<-subset(Natural1,Station_ID=="LSPC188PERO")
+dy.Nattpload <- xts(x = LSPC188.natural$TPLoad, order.by = LSPC188.natural$Date)
+
+LSPC188.tpload<-cbind(dy.tpload,dy.Nattpload)
+
+
+LSPC188.tpload <- na.locf(LSPC188.tpload)
+
+p <- dygraph(LSPC188.tpload, main="TP Load at LSPC 188 - Below Frank", ylab="TP Load (lbs/day)") %>%
+  dySeries("dy.tpload", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
+  dySeries("dy.Nattpload", drawPoints= T, color="blue") %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(3, "Set2")) %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+
+p
+
+
+
+```
+
+
