@@ -380,21 +380,3 @@ ggplot(BaseModel,aes(Month,TPLoad)) + geom_bar(stat="identity") + ggtitle("TP Lo
 
 
 ```
-
-```{r, Plotly, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}}
-
-plot_ly( data = BaseModel1, x = BaseModel1$Date, y = BaseModel1$DO) %>% 
-  add_trace(type = "scatter" ,mode = "lines+markers")  %>% 
-  layout(
-    title = "Time Series of DO",
-    xaxis = list(
-      title = "Year"),
-    yaxis = list(
-      title = "DO (mg/L"))
-
-
-
-
-
-```
-
