@@ -1,3 +1,18 @@
 ---
 title: "Harpeth TMDL"
 ---
+
+```{r, Intro, eval=TRUE}
+
+WASP.version<-8
+
+
+
+```
+
+# Introduction
+
+**Harpeth TMDL** --  Water Quality Analysis Simulation Program (WASP version `r WASP.version`)
+
+Exploration of water quality data using the calibrated WASP models provided to TDEC and others by the EPA Region 4
+
