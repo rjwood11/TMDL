@@ -1,7 +1,7 @@
 HarpethTMDL
 ================
 RJ
-2022-07-15
+2022-07-20
 
 ``` r
 WASP.version<-8
@@ -50,7 +50,7 @@ library(forecast)
 time = lubridate::with_tz(Sys.time(), "CST6CDT")
 ```
 
-This file was last updated on 2022-07-15 14:53:11
+This file was last updated on 2022-07-20 08:40:11
 
 ``` r
 #Import Data
