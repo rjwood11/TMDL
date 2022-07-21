@@ -115,6 +115,19 @@ Natural <- read_delim("NATURAL_MODEL_2011_To_2020.txt",
 head(Natural,15)
 
 
+Base_PS <- read_delim("Harpeth_Epa_Base_Model_2_25_X_Ps.txt", 
+    delim = "\t", escape_double = FALSE, 
+    col_types = cols(`Date-Time` = col_datetime(format = "%m/%d/%Y %H:%M"), 
+        Station_ID = col_character(), CBOD = col_number(), 
+        DIP = col_number(), DO = col_number(), 
+        DON = col_number(), DOP = col_number(), 
+        FLOW_CMS = col_number(), NH3_N = col_number(), 
+        NO3O2 = col_number(), PHYTO = col_number(), 
+        PON = col_number(), SOD_T = col_number(), 
+        TN = col_number(), TP = col_number(), 
+        WTEMP = col_number()), trim_ws = TRUE)
+head(Base_PS)
+
 
 unique(Grab[c(4,6)])
 
