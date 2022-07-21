@@ -2,7 +2,7 @@
 title: "HarpethTMDL"
 author: "RJ"
 date: "`r Sys.Date()`"
-output: github_document
+output: html_document
 always_allow_html: true
 ---
 
@@ -21,7 +21,7 @@ WASP.version<-8
 Exploration of water quality data using the calibrated WASP models provided to TDEC and others by the EPA Region 4
 
 
-```{r, Setup, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE}
+```{r, Setup, warning=FALSE, include=FALSE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE}
 #Load in required packages
 
 library(yaml)
@@ -161,9 +161,10 @@ unique(Grab[c(4,6)])
 # HARPETH_62 = Upstream of Franklin STP
 # LSPC188PERO = Downstream of Franklin STP
 # LSPC183PERO = Headwaters
+# LSPC192PERO = Hwy100
 
 
-sites=c("HARPETH_1","JONES_167","HARPETH_2", "TURNBULL_143", "S_HARPETH_124", "HARPETH_34", "LSPC188PERO", "HARPETH_62", "LSPC183PERO")
+sites=c("HARPETH_1","JONES_167","HARPETH_2", "TURNBULL_143", "S_HARPETH_124", "HARPETH_34", "LSPC188PERO", "HARPETH_62", "LSPC183PERO","LSPC192PERO")
 
 colnames(BaseModel)[1] <- "Date"
 
@@ -183,7 +184,7 @@ colnames(Cont)[2] <- "Date"
 
 colnames(Natural)[1] <- "Date"
 
-
+colnames(Base_PS)[1] <- "Date"
 
 Natural$NP<-Natural$TN/Natural$TP
 
@@ -194,6 +195,11 @@ Natural$TPLoad.csum <- ave(Natural$TPLoad, Natural$Station_ID, FUN=cumsum)
 Natural1<-Natural
 
 Natural<-Natural[Natural$Station_ID==sites,]
+
+Base_PS1<-Base_PS
+
+Base_PS<-Base_PS[Base_PS$Station_ID==sites,]
+
 
 #####################################################################################################
 
@@ -347,6 +353,74 @@ HARPETH_62<-ggplot(BaseModel,aes(x=Date,y=TP))+geom_line(data=subset(BaseModel,S
 
 ```
 
+
+```{r, DO, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
+
+LSPC188_DO<-ggplot(BaseModel,aes(x=Date,y=DO, color="Base Model"))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
+  labs(y="DO (mg/L)")+ylim(min(BaseModel$DO),max(BaseModel$DO))+
+  theme(
+    axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
+    axis.text.x=element_text(size=11),axis.title.x=element_text(size=11), 
+    panel.border = element_rect(size=.8, colour = "black"))+
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=DO, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=DO, color="Natural"))
+
+LSPC188_DO
+
+LSPC188_DO_PSinc<-ggplot(Base_PS,aes(x=Date,y=DO,color="Base Model x 2.25 PS"))+geom_line(data=subset(Base_PS,Station_ID=="LSPC188PERO")) +theme_bw()+
+  labs(y="DO (mg/L)")+ylim(min(Base_PS$DO),max(Base_PS$DO))+
+  theme(
+    axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
+    axis.text.x=element_text(size=11),axis.title.x=element_text(size=11), 
+    panel.border = element_rect(size=.8, colour = "black"))+
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=DO, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=DO, color="Natural"))
+
+LSPC188_DO_PSinc
+
+LSPC188_flow<-ggplot(BaseModel,aes(x=Date,y=FLOW_CMS))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
+  labs(y="Flow (cms)")+ylim(min(BaseModel$FLOW_CMS),200)+
+  theme(
+    axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
+    axis.text.x=element_text(size=11),axis.title.x=element_text(size=11), 
+    panel.border = element_rect(size=.8, colour = "black"))+
+  geom_point(data=subset(Cont.w, Station_ID==c("USGS_03432400")), aes(x=Date, y=FLOW_CMS, color=Station_ID))+
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=FLOW_CMS, color="Natural"))
+
+LSPC188_flow
+
+
+grid.arrange(LSPC188_DO,LSPC188_DO_PSinc,LSPC188_flow, ncol=1,padding=100)
+
+
+
+p<-ggplot(BaseModel, aes(x=Date, y=DO, fill=Station_ID)) + ggtitle("Base Model/Current Conditions") + theme_bw() +
+  geom_line(aes(colour=Station_ID, group=Station_ID)) +
+  geom_point(data=subset(Cont.w, Station_ID==c("USGS_03434500","HARPE062")) , aes(x=Date, y=DO))
+
+p
+
+
+p1<-ggplot(Natural, aes(x=Date, y=DO, fill=Station_ID)) + ggtitle("Natural Conditions") + theme_bw() +
+  geom_line(aes(colour=Station_ID, group=Station_ID))
+
+p1
+
+
+p3<-ggplot(Base_PS, aes(x=Date, y=DO, fill=Station_ID)) + theme_bw() +
+  geom_line(aes(colour=Station_ID, group=Station_ID))
+
+p3
+
+
+
+
+
+```
+
+
+
+
 ```{r, Seasonal Trends, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
 
 
@@ -448,6 +522,78 @@ p <- dygraph(LSPC188.tpload, main="TP Load at LSPC 188 - Below Frank", ylab="TP 
 
 
 p
+
+
+LSPC192.base<-subset(BaseModel1,Station_ID=="LSPC192PERO")
+dy.DO <- xts(x = LSPC192.base$DO, order.by = LSPC192.base$Date)
+
+LSPC192.natural<-subset(Natural1,Station_ID=="LSPC192PERO")
+dy.NatDO <- xts(x = LSPC192.natural$DO, order.by = LSPC192.natural$Date)
+
+LSPC192.Base_PS<-subset(Base_PS1,Station_ID=="LSPC192PERO")
+dy.Base_PSDO <- xts(x = LSPC192.Base_PS$DO, order.by = LSPC192.Base_PS$Date)
+
+LSPC192.Cont<-subset(Cont.w,Station_ID==c("USGS_03433500","HARPE062"))
+dy.ContDO <- xts(x = LSPC192.Cont$DO, order.by = LSPC192.Cont$Date)
+
+LSPC192.DO<-cbind(dy.DO,dy.NatDO,dy.Base_PSDO,dy.ContDO)
+
+
+LSPC192.DO <- na.locf(LSPC192.DO)
+
+
+p1 <- dygraph(LSPC192.DO, main="Dissolved Oxygen at LSPC 192 - Hwy 100", ylab="DO (mg/L)") %>%
+  dySeries("dy.DO", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
+  dySeries("dy.NatDO", drawPoints= T, color="blue") %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(4, "Set1")) %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+
+p1
+
+
+LSPC188.base<-subset(BaseModel1,Station_ID=="LSPC188PERO")
+dy.DO <- xts(x = LSPC188.base$DO, order.by = LSPC188.base$Date)
+
+LSPC188.natural<-subset(Natural1,Station_ID=="LSPC188PERO")
+dy.NatDO <- xts(x = LSPC188.natural$DO, order.by = LSPC188.natural$Date)
+
+LSPC188.Base_PS<-subset(Base_PS1,Station_ID=="LSPC188PERO")
+dy.Base_PSDO <- xts(x = LSPC188.Base_PS$DO, order.by = LSPC188.Base_PS$Date)
+
+LSPC188.Cont<-subset(Cont.w,Station_ID==c("USGS_03432400","USGS_03432350"))
+dy.ContDO <- xts(x = LSPC188.Cont$DO, order.by = LSPC188.Cont$Date)
+
+LSPC188.Grab<-subset(Grab.w,Station_ID==c("Frank_Down","Frank_CottonLn", "Frank_Eff", "Franklin_Site_2", "Franklin_Site_3"))
+dy.GrabDO <- xts(x = LSPC188.Grab$DO, order.by = LSPC188.Grab$Date)
+
+
+LSPC188.DO<-cbind(dy.DO,dy.NatDO,dy.Base_PSDO,dy.ContDO,dy.GrabDO)
+
+
+LSPC188.DO <- na.locf(LSPC188.DO)
+
+
+
+
+
+
+p2 <- dygraph(LSPC188.DO, main="Dissolved Oxygen at LSPC 188 - Below Franklin STP", ylab="DO (mg/L)") %>%
+  dySeries("dy.DO", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
+  dySeries("dy.NatDO", drawPoints= T, color="blue") %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(5, "Set1")) %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+
+p2
+
+
 
 
 
