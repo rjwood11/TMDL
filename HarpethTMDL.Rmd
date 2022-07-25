@@ -487,10 +487,24 @@ ggplot(BaseModel,aes(Month,TPLoad)) + geom_bar(stat="identity") + ggtitle("TP Lo
 
 ```{r, TP, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE}
 
-p <- ggplot(data=BaseModel1, aes(x=Date, y=TP, color=Station_ID)) +
+p <- ggplot(data=BaseModel1, aes(x=Date, y=DO, color=Station_ID)) +
   geom_line(data=subset(BaseModel1,Station_ID=="LSPC188PERO")) + 
   xlab("Year") +
   geom_line(data=subset(BaseModel1, Station_ID==sites))
+
+p
+
+p <- ggplot(data=Base_PS1, aes(x=Date, y=DO, color=Station_ID)) +
+  geom_line(data=subset(Base_PS1,Station_ID=="LSPC188PERO")) + 
+  xlab("Year") +
+  geom_line(data=subset(Base_PS1, Station_ID==sites))
+
+p
+
+p <- ggplot(data=Natural1, aes(x=Date, y=DO, color=Station_ID)) +
+  geom_line(data=subset(Natural1,Station_ID=="LSPC188PERO")) + 
+  xlab("Year") +
+  geom_line(data=subset(Natural1, Station_ID==sites))
 
 p
 
@@ -539,7 +553,7 @@ dy.ContDO <- xts(x = LSPC192.Cont$DO, order.by = LSPC192.Cont$Date)
 LSPC192.DO<-cbind(dy.DO,dy.NatDO,dy.Base_PSDO,dy.ContDO)
 
 
-LSPC192.DO <- na.locf(LSPC192.DO)
+#LSPC192.DO <- na.locf(LSPC192.DO)
 
 
 p1 <- dygraph(LSPC192.DO, main="Dissolved Oxygen at LSPC 192 - Hwy 100", ylab="DO (mg/L)") %>%
@@ -574,7 +588,7 @@ dy.GrabDO <- xts(x = LSPC188.Grab$DO, order.by = LSPC188.Grab$Date)
 LSPC188.DO<-cbind(dy.DO,dy.NatDO,dy.Base_PSDO,dy.ContDO,dy.GrabDO)
 
 
-LSPC188.DO <- na.locf(LSPC188.DO)
+#LSPC188.DO <- na.locf(LSPC188.DO)
 
 
 
@@ -595,6 +609,161 @@ p2
 
 
 
+HARPETH_62.base<-subset(BaseModel1,Station_ID=="HARPETH_62")
+dy.DO <- xts(x = HARPETH_62.base$DO, order.by = HARPETH_62.base$Date)
+
+HARPETH_62.natural<-subset(Natural1,Station_ID=="HARPETH_62")
+dy.NatDO <- xts(x = HARPETH_62.natural$DO, order.by = HARPETH_62.natural$Date)
+
+HARPETH_62.Base_PS<-subset(Base_PS1,Station_ID=="HARPETH_62")
+dy.Base_PSDO <- xts(x = HARPETH_62.Base_PS$DO, order.by = HARPETH_62.Base_PS$Date)
+
+HARPETH_62.Cont<-subset(Cont.w,Station_ID==c("usgs_03432350","USGS_0343233905"))
+dy.ContDO <- xts(x = HARPETH_62.Cont$DO, order.by = HARPETH_62.Cont$Date)
+
+HARPETH_62.Grab<-subset(Grab.w,Station_ID==c("Frank_Up","Franklin_Site_1"))
+dy.GrabDO <- xts(x = HARPETH_62.Grab$DO, order.by = HARPETH_62.Grab$Date)
+
+
+HARPETH_62.DO<-cbind(dy.DO,dy.NatDO,dy.Base_PSDO,dy.ContDO,dy.GrabDO)
+
+
+#HARPETH_62.DO <- na.locf(HARPETH_62.DO)
+
+
+
+
+
+
+p3 <- dygraph(HARPETH_62.DO, main="Dissolved Oxygen at Harpeth 62 - Upstream of Franklin STP", ylab="DO (mg/L)") %>%
+  dySeries("dy.DO", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
+  dySeries("dy.NatDO", drawPoints= T, color="blue") %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(5, "Set1")) %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+
+p3
+
+
+JONES_167.base<-subset(BaseModel1,Station_ID=="JONES_167")
+dy.DO <- xts(x = JONES_167.base$DO, order.by = JONES_167.base$Date)
+
+JONES_167.natural<-subset(Natural1,Station_ID=="JONES_167")
+dy.NatDO <- xts(x = JONES_167.natural$DO, order.by = JONES_167.natural$Date)
+
+JONES_167.Base_PS<-subset(Base_PS1,Station_ID=="JONES_167")
+dy.Base_PSDO <- xts(x = JONES_167.Base_PS$DO, order.by = JONES_167.Base_PS$Date)
+
+#JONES_167.Cont<-subset(Cont.w,Station_ID==c("usgs_03432350","USGS_0343233905"))
+#dy.ContDO <- xts(x = JONES_167.Cont$DO, order.by = JONES_167.Cont$Date)
+
+#JONES_167.Grab<-subset(Grab.w,Station_ID==c("Frank_Up","Franklin_Site_1"))
+#dy.GrabDO <- xts(x = JONES_167.Grab$DO, order.by = JONES_167.Grab$Date)
+
+
+JONES_167.DO<-cbind(dy.DO,dy.NatDO,dy.Base_PSDO)
+
+
+#JONES_167.DO <- na.locf(JONES_167.DO)
+
+
+
+
+
+
+p4 <- dygraph(JONES_167.DO, main="Dissolved Oxygen at JONES_167 - Mouth of Jones Creek", ylab="DO (mg/L)") %>%
+  dySeries("dy.DO", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
+  dySeries("dy.NatDO", drawPoints= T, color="blue") %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(5, "Set1")) %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+
+p4
+
+
+
+LSPC183PERO.base<-subset(BaseModel1,Station_ID=="LSPC183PERO")
+dy.DO <- xts(x = LSPC183PERO.base$DO, order.by = LSPC183PERO.base$Date)
+
+LSPC183PERO.natural<-subset(Natural1,Station_ID=="LSPC183PERO")
+dy.NatDO <- xts(x = LSPC183PERO.natural$DO, order.by = LSPC183PERO.natural$Date)
+
+LSPC183PERO.Base_PS<-subset(Base_PS1,Station_ID=="LSPC183PERO")
+dy.Base_PSDO <- xts(x = LSPC183PERO.Base_PS$DO, order.by = LSPC183PERO.Base_PS$Date)
+
+#LSPC183PERO.Cont<-subset(Cont.w,Station_ID==c("usgs_03432350","USGS_0343233905"))
+#dy.ContDO <- xts(x = LSPC183PERO.Cont$DO, order.by = LSPC183PERO.Cont$Date)
+
+#LSPC183PERO.Grab<-subset(Grab.w,Station_ID==c("Frank_Up","Franklin_Site_1"))
+#dy.GrabDO <- xts(x = LSPC183PERO.Grab$DO, order.by = LSPC183PERO.Grab$Date)
+
+
+LSPC183PERO.DO<-cbind(dy.DO,dy.NatDO,dy.Base_PSDO)
+
+
+#LSPC183PERO.DO <- na.locf(LSPC183PERO.DO)
+
+
+
+
+
+
+p4 <- dygraph(LSPC183PERO.DO, main="Dissolved Oxygen at LSPC183PERO - Headwaters", ylab="DO (mg/L)") %>%
+  dySeries("dy.DO", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
+  dySeries("dy.NatDO", drawPoints= T, color="blue") %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(5, "Set1")) %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+
+p4
+
+
+S_HARPETH_124.base<-subset(BaseModel1,Station_ID=="S_HARPETH_124")
+dy.DO <- xts(x = S_HARPETH_124.base$DO, order.by = S_HARPETH_124.base$Date)
+
+S_HARPETH_124.natural<-subset(Natural1,Station_ID=="S_HARPETH_124")
+dy.NatDO <- xts(x = S_HARPETH_124.natural$DO, order.by = S_HARPETH_124.natural$Date)
+
+S_HARPETH_124.Base_PS<-subset(Base_PS1,Station_ID=="S_HARPETH_124")
+dy.Base_PSDO <- xts(x = S_HARPETH_124.Base_PS$DO, order.by = S_HARPETH_124.Base_PS$Date)
+
+#S_HARPETH_124.Cont<-subset(Cont.w,Station_ID==c("usgs_03432350","USGS_0343233905"))
+#dy.ContDO <- xts(x = S_HARPETH_124.Cont$DO, order.by = S_HARPETH_124.Cont$Date)
+
+#S_HARPETH_124.Grab<-subset(Grab.w,Station_ID==c("Frank_Up","Franklin_Site_1"))
+#dy.GrabDO <- xts(x = S_HARPETH_124.Grab$DO, order.by = S_HARPETH_124.Grab$Date)
+
+
+S_HARPETH_124.DO<-cbind(dy.DO,dy.NatDO,dy.Base_PSDO)
+
+
+#S_HARPETH_124.DO <- na.locf(S_HARPETH_124.DO)
+
+
+
+
+
+
+p5 <- dygraph(S_HARPETH_124.DO, main="Dissolved Oxygen at S_HARPETH_124 - Mouth of South Harpeth", ylab="DO (mg/L)") %>%
+  dySeries("dy.DO", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
+  dySeries("dy.NatDO", drawPoints= T, color="blue") %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(5, "Set1")) %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+
+p5
 
 
 ```
@@ -617,6 +786,13 @@ ggplot(Natural, aes(x=TP, col=Station_ID))+
   geom_hline(yintercept=c(.95,0.75), color="black")+
   xlim(0,1.2)+labs(title="Model - Natural",
         x ="TP (mg/L)", y = "Probability of Occurence")
+
+ggplot(Base_PS, aes(x=TP, col=Station_ID))+
+  stat_ecdf(lwd=1.2)+
+  geom_hline(yintercept=c(.95,0.75), color="black")+
+  xlim(0,1.2)+labs(title="Base_PS",
+        x ="TP (mg/L)", y = "Probability of Occurence")
+
 
 ```
 
