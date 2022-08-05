@@ -862,6 +862,12 @@ dy.NatTPLoad <- xts(x = LSPC188PERO.natural$TPLoad, order.by = LSPC188PERO.natur
 LSPC188PERO.Base_PS<-subset(Base_PS1,Station_ID=="LSPC188PERO")
 dy.Base_PSTPLoad <- xts(x = LSPC188PERO.Base_PS$TPLoad, order.by = LSPC188PERO.Base_PS$Date)
 
+
+
+LSPC188PERO.FrankPermit<-subset(Base_NoFrank1,Station_ID=="LSPC188PERO")
+dy.FrankPermitTPLoad <- xts(x = LSPC188PERO.FrankPermit$TPLoad+174.5, order.by = LSPC188PERO.FrankPermit$Date)
+
+
 #LSPC188PERO.Cont<-subset(Cont.w,Station_ID==c("usgs_03432350","USGS_0343233905"))
 #dy.ContTPLoad <- xts(x = LSPC188PERO.Cont$TPLoad, order.by = LSPC188PERO.Cont$Date)
 
@@ -869,17 +875,17 @@ dy.Base_PSTPLoad <- xts(x = LSPC188PERO.Base_PS$TPLoad, order.by = LSPC188PERO.B
 #dy.GrabTPLoad <- xts(x = LSPC188PERO.Grab$TPLoad, order.by = LSPC188PERO.Grab$Date)
 
 
-LSPC188PERO.TPLoad<-cbind(dy.TPLoad,dy.NatTPLoad,dy.Base_PSTPLoad,dy.NoFrankTPLoad)
+LSPC188PERO.TPLoad<-cbind(dy.TPLoad,dy.NatTPLoad,dy.Base_PSTPLoad,dy.NoFrankTPLoad,dy.FrankPermitTPLoad)
 
 
-#LSPC188PERO.TPLoad <- na.locf(LSPC188PERO.TPLoad)
-
-
-
+LSPC188PERO.TPLoad <- na.locf(LSPC188PERO.TPLoad)
 
 
 
-p5 <- dygraph(LSPC188PERO.TPLoad, main="Dissolved Oxygen at LSPC188PERO - Mouth of South Harpeth", ylab="TPLoad (mg/L)") %>%
+
+
+
+p5 <- dygraph(LSPC188PERO.TPLoad, main="TP Load at LSPC188PERO - Below Franklin", ylab="TPLoad (lbs/day)") %>%
   dySeries("dy.TPLoad", drawPoints = TRUE, strokePattern="dashed", color="red") %>%
   dySeries("dy.NatTPLoad", drawPoints= T, color="blue") %>%
   dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors = RColorBrewer::brewer.pal(5, "Set1")) %>%
@@ -895,9 +901,12 @@ p5
 
 
 
+
+
+
 ```
 
-
+FrankPermitTPLoad = Permit limit 174 lbs/day added to No Franklin Model in order to represent TP Load in Harpeth with addition of Franklin Permit Limits
 
 
 
