@@ -148,6 +148,18 @@ head(Base_NoFrank)
 
 
 
+library(readr)
+NPDES <- read_delim("Point_Source_Wastestream_Dataset.txt", 
+    delim = "\t", escape_double = FALSE, 
+    col_types = cols(`Date-Time` = col_datetime(format = "%m/%d/%Y %H:%M"), 
+        CBOD = col_number(), DO = col_number(), 
+        FLOW = col_number(), NH3 = col_number(), 
+        NOX = col_number(), `NP RATIO` = col_number(), 
+        ORGN = col_number(), ORGP = col_number(), 
+        PO4 = col_number(), TKN = col_number(), 
+        TN = col_number(), TP = col_number(), 
+        TSS = col_number(), WTEMP = col_number()), 
+    trim_ws = TRUE)
 
 
 
@@ -198,6 +210,8 @@ colnames(Natural)[1] <- "Date"
 
 colnames(Base_PS)[1] <- "Date"
 
+colnames(NPDES)[1] <- "Date"
+
 Natural$NP<-Natural$TN/Natural$TP
 
 Natural$TPLoad<-Natural$TP*0.00220462*Natural$FLOW_CMS*86400
@@ -208,9 +222,13 @@ Natural1<-Natural
 
 Natural<-Natural[Natural$Station_ID==sites,]
 
-Base_PS1<-Base_PS
+
 
 Base_PS<-Base_PS[Base_PS$Station_ID==sites,]
+
+Base_PS$TPLoad<-Base_PS$TP*0.00220462*Base_PS$FLOW_CMS*86400
+
+Base_PS1<-Base_PS
 
 colnames(Base_NoFrank)[1] <- "Date"
 
@@ -225,6 +243,13 @@ Base_NoFrank1<-Base_NoFrank
 Base_NoFrank<-Base_NoFrank[Base_NoFrank$Station_ID==sites,]
 
 
+NPDES$TPLoad<-NPDES$TP*0.00220462*NPDES$FLOW*86400
+
+NPDES$TPLoad.csum <- ave(NPDES$TPLoad, NPDES$Station_ID, FUN=cumsum)
+
+NPDES$NP<-NPDES$TN/NPDES$TP
+
+NPDES1<-NPDES
 
 
 
@@ -307,7 +332,7 @@ np
 
 ```{r, Data Comparison, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
 
-LSPC188_tp<-ggplot(BaseModel,aes(x=Date,y=TP, color="Base Model"))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
+LSPC188_tp<-ggplot(BaseModel,aes(x=Date,y=TP, fill="Base Model"))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
   labs(y="TP (mg/L)")+ylim(min(BaseModel$TP),max(BaseModel$TP))+
   theme(
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
@@ -316,7 +341,7 @@ LSPC188_tp<-ggplot(BaseModel,aes(x=Date,y=TP, color="Base Model"))+geom_line(dat
   geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TP, color=Station_ID))+
   geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=TP, color="Natural"))
 
-#LSPC188_tp
+LSPC188_tp
 
 LSPC188_tn<-ggplot(BaseModel,aes(x=Date,y=TN))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
   labs(y="TN (mg/L)")+ylim(min(BaseModel$TN),max(BaseModel$TN))+
@@ -327,7 +352,7 @@ LSPC188_tn<-ggplot(BaseModel,aes(x=Date,y=TN))+geom_line(data=subset(BaseModel,S
   geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=TN, color=Station_ID))+
   geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=TN, color="Natural"))
 
-#LSPC188_tn
+LSPC188_tn
 
 LSPC188_flow<-ggplot(BaseModel,aes(x=Date,y=FLOW_CMS))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
   labs(y="Flow (cms)")+ylim(min(BaseModel$FLOW_CMS),200)+
@@ -338,7 +363,7 @@ LSPC188_flow<-ggplot(BaseModel,aes(x=Date,y=FLOW_CMS))+geom_line(data=subset(Bas
   geom_point(data=subset(Cont.w, Station_ID==c("USGS_03432400")), aes(x=Date, y=FLOW_CMS, color=Station_ID))+
   geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=FLOW_CMS, color="Natural"))
 
-#LSPC188_flow
+LSPC188_flow
 
 
 
@@ -351,7 +376,7 @@ LSPC188_np<-ggplot(BaseModel,aes(x=Date,y=NP))+geom_line(data=subset(BaseModel,S
   geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=NP, color=Station_ID))+
   geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=NP, color="Natural"))
 
-#LSPC188_np
+LSPC188_np
 
 grid.arrange(LSPC188_tp,LSPC188_tn,LSPC188_flow,LSPC188_np, ncol=1,padding=100)
 
@@ -384,24 +409,24 @@ HARPETH_62<-ggplot(BaseModel,aes(x=Date,y=TP))+geom_line(data=subset(BaseModel,S
 
 ```{r, DO, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
 
-LSPC188_DO<-ggplot(BaseModel,aes(x=Date,y=DO, color="Base Model"))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
+LSPC188_DO<-ggplot(BaseModel,aes(x=Date,y=DO, fill="Base Model"))+geom_line(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +theme_bw()+
   labs(y="DO (mg/L)")+ylim(min(BaseModel$DO),max(BaseModel$DO))+
   theme(
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_text(size=11),axis.title.x=element_text(size=11), 
     panel.border = element_rect(size=.8, colour = "black"))+
   geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=DO, color=Station_ID))+
-  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=DO, color="Natural"))
+  geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=DO, colour="Natural"))
 
 LSPC188_DO
 
-LSPC188_DO_PSinc<-ggplot(Base_PS,aes(x=Date,y=DO,color="Base Model x 2.25 PS"))+geom_line(data=subset(Base_PS,Station_ID=="LSPC188PERO")) +theme_bw()+
+LSPC188_DO_PSinc<-ggplot(Base_PS,aes(x=Date,y=DO,fill="Base Model x 2.25 PS"))+geom_line(data=subset(Base_PS,Station_ID=="LSPC188PERO")) +theme_bw()+
   labs(y="DO (mg/L)")+ylim(min(Base_PS$DO),max(Base_PS$DO))+
   theme(
     axis.text.y=element_text(size=11),axis.title.y=element_text(size=12, vjust=1.2),
     axis.text.x=element_text(size=11),axis.title.x=element_text(size=11), 
     panel.border = element_rect(size=.8, colour = "black"))+
-  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=DO, color=Station_ID))+
+  geom_point(data=subset(Grab.w, Station_ID==c("Frank_Down","Frank_CottonLn","Franklin_Site_2","Franklin_Site_3")), aes(x=Date, y=DO, colour=Station_ID))+
   geom_line(data=subset(Natural, Station_ID=="LSPC188PERO"), aes(x=Date, y=DO, color="Natural"))
 
 LSPC188_DO_PSinc
@@ -423,8 +448,8 @@ grid.arrange(LSPC188_DO,LSPC188_DO_PSinc,LSPC188_flow, ncol=1,padding=100)
 
 
 p<-ggplot(BaseModel, aes(x=Date, y=DO, fill=Station_ID)) + ggtitle("Base Model/Current Conditions") + theme_bw() +
-  geom_line(aes(colour=Station_ID, group=Station_ID)) +
-  geom_point(data=subset(Cont.w, Station_ID==c("USGS_03434500","HARPE062")) , aes(x=Date, y=DO))
+  geom_line(aes(colour=Station_ID, group=Station_ID)) #+
+  #geom_point(data=subset(Cont.w, Station_ID==c("USGS_03434500","HARPE062")) , aes(x=Date, y=DO))
 
 p
 
@@ -458,6 +483,21 @@ BaseModel$Year <- factor(format(BaseModel$Date, "%Y"))
 ggplot(BaseModel, aes(Month, TPLoad)) + geom_boxplot(data=subset(BaseModel,Station_ID=="LSPC188PERO")) + stat_boxplot(geom ='errorbar') + ggtitle("TP Load (lbs/day)")
 
 ggplot(BaseModel,aes(Month,TPLoad)) + geom_bar(stat="identity") + ggtitle("TP Load (lbs/month)")
+
+
+Natural$Month <- factor(format(Natural$Date, "%b"), levels = monthOrder)
+Natural$Year <- factor(format(Natural$Date, "%Y"))
+ggplot(Natural, aes(Month, TPLoad)) + geom_boxplot(data=subset(Natural,Station_ID=="LSPC188PERO")) + stat_boxplot(geom ='errorbar') + ggtitle("Natural Model - TP Load (lbs/day)")
+
+
+Base_NoFrank1$Month <- factor(format(Base_NoFrank1$Date, "%b"), levels = monthOrder)
+Base_NoFrank1$Year <- factor(format(Base_NoFrank1$Date, "%Y"))
+ggplot(Base_NoFrank1, aes(Month, TPLoad)) + geom_boxplot(data=subset(Base_NoFrank1,Station_ID=="LSPC188PERO")) + stat_boxplot(geom ='errorbar') + ggtitle("Base_NoFrank1 Model - TP Load (lbs/day)")
+
+
+Base_PS1$Month <- factor(format(Base_PS1$Date, "%b"), levels = monthOrder)
+Base_PS1$Year <- factor(format(Base_PS1$Date, "%Y"))
+ggplot(Base_PS1, aes(Month, TPLoad)) + geom_boxplot(data=subset(Base_PS1,Station_ID=="LSPC188PERO")) + stat_boxplot(geom ='errorbar') + ggtitle("Base_PS1 Model - TP Load (lbs/day)")
 
 ##################
 
@@ -909,5 +949,93 @@ p5
 FrankPermitTPLoad = Permit limit 174 lbs/day added to No Franklin Model in order to represent TP Load in Harpeth with addition of Franklin Permit Limits
 
 
+```{r, NPDES Graphs, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE}
+
+
+
+a<-subset(NPDES, Station_ID=="TN0020460")
+b<-subset(NPDES, Station_ID=="TN0027278")
+c<-subset(NPDES, Station_ID=="TN0028827")
+d<-subset(NPDES, Station_ID=="TN0029718")
+e<-subset(NPDES, Station_ID=="TN0057789")
+
+f<-subset(NPDES, Station_ID=="TN0057827")
+g<-subset(NPDES, Station_ID=="TN0057835")
+h<-subset(NPDES, Station_ID=="TN0059790")
+i<-subset(NPDES, Station_ID=="TN0060216")
+j<-subset(NPDES, Station_ID=="TN0062332")
+
+k<-subset(NPDES, Station_ID=="TN0064297")
+l<-subset(NPDES, Station_ID=="TN0066958")
+m<-subset(NPDES, Station_ID=="TN0067164")
+n<-subset(NPDES, Station_ID=="TN0067873")
+o<-subset(BaseModel, Station_ID=="HARPETH_1")
+
+
+#c$TPLoad.csum<-c$TPLoad*0.00220462*NPDES$FLOW*86400
+
+#MonthlyLoad <- function(x,y){
+#  return(x*y*0.00220462*86400*30)
+#}
+
+#add_one_if <- function(vector, x_id, y_id, run_on_id){
+#    if(vector[run_on_id]){
+#        return(add_one(vector,x_id))}
+#    else{
+#        return(vector[x_id])
+#    }
+#}
+
+#test$y <- apply(test, 1, add_one_if, x_id = 1, y_id = 2, run_on_id = 3)
+
+
+#NPDES.list<-c("a","b","c","d","e","f","g","h","i","j","k","l","m","n")
+
+
+#for (i in NPDES.list) {
+
+#i$Date2=dplyr::lead(i$Date)
+
+#i$Date.dif<-difftime(i$Date2,i$Date)
+
+
+#}
+
+
+
+
+#NPDES$TPLoad.csum <- ave(NPDES$TPLoad, NPDES$Station_ID, FUN=cumsum)
+
+#NPDES$NP<-NPDES$TN/NPDES$TP
+
+#NPDES1<-NPDES
+
+
+
+
+#PS.TPload<-max(a$TPLoad.csum)+max(b$TPLoad.csum)+max(c$TPLoad.csum)+max(d$TPLoad.csum)+max(e$TPLoad.csum)+max(f$TPLoad.csum)+max(g$TPLoad.csum)+max(h$TPLoad.csum)+max(i$TPLoad.csum)+max(j$TPLoad.csum)+max(k$TPLoad.csum)+max(l$TPLoad.csum)+max(m$TPLoad.csum)+max(n$TPLoad.csum)
+
+#PS.TPload #Cumulative TP Load between Jan 2011 and Dec 2019 of all combined Point Sources from NPDES permits
+#max(o$TPLoad.csum) #Cumulative TP Load between Jan 2011 and Dec 2019 from HARPETH mouth (HARPETH_1)
+
+
+#PS.TPload/max(o$TPLoad.csum)
+
+
+
+#PS.TPload<-data.frame(c$Date,PS.TPload)
+
+#colnames(PS.TPload)[1] <- "Date"
+#colnames(PS.TPload)[2] <- "TPLoad.csum"
+
+#p <- ggplot(data=PS.TPload, aes(x=Date, y=log(TPLoad.csum))) +
+#  geom_line() + 
+#  xlab("Year") +
+#  geom_line(data=subset(BaseModel, Station_ID=="HARPETH_1"))
+
+#p
+
+
+```
 
 
