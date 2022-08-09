@@ -480,7 +480,9 @@ p3
 monthOrder <- c('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 BaseModel$Month <- factor(format(BaseModel$Date, "%b"), levels = monthOrder)
 BaseModel$Year <- factor(format(BaseModel$Date, "%Y"))
-ggplot(BaseModel, aes(Month, TPLoad)) + geom_boxplot(data=subset(BaseModel,Station_ID=="LSPC188PERO")) + stat_boxplot(geom ='errorbar') + ggtitle("TP Load (lbs/day)")
+ggplot(BaseModel, aes(Month, TPLoad)) + geom_boxplot(data=subset(BaseModel,Station_ID=="LSPC188PERO")) +
+  geom_boxplot(data=subset(BaseModel,Station_ID=="HARPETH_62")) + 
+  stat_boxplot(geom ='errorbar') + ggtitle("TP Load (lbs/day)")
 
 ggplot(BaseModel,aes(Month,TPLoad)) + geom_bar(stat="identity") + ggtitle("TP Load (lbs/month)")
 
