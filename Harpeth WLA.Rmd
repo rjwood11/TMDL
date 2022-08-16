@@ -1,0 +1,110 @@
+---
+title: "Harpeth WLA"
+author: "RJ"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+```{r, Setup, warning=FALSE, include=FALSE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE}
+#Load in required packages
+
+library(yaml)
+library(tidyverse)
+library(osmdata) 
+library(ggmap)
+library(dataRetrieval)
+library(XML)
+library(DT)
+library(dbplyr)
+library(widgetframe)
+library(rgdal)
+library(leaflet)
+library(plotly)
+library(formattable)
+library(htmltools)
+library(leaflet)
+library(sf)
+library(kableExtra)
+library(knitr)
+library(wql)
+library(readxl)
+library(fasstr)
+library(readr)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(lattice)
+library(reshape)
+library(reshape2)
+library(forecast)
+library(dygraphs)
+library(xts)          # To make the convertion data-frame / xts format
+library(lubridate)
+library(zoo)
+
+time = lubridate::with_tz(Sys.time(), "CST6CDT")
+
+```
+
+
+
+
+```{r, Import Data, warning=FALSE, include=FALSE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE}
+
+library(readr)
+
+Grab <- read_excel("GrabSamples.xlsx", 
+    col_types = c("skip", "text", "text", 
+        "skip", "skip", "date", "text", "numeric", 
+        "text"))
+
+head(Grab,15)
+
+Cont <- read_csv("Cont.csv", col_types = cols(...1 = col_skip(), 
+    Date_Time = col_datetime(format = "%Y-%m-%d %H:%M:%S"), 
+    Result = col_number()))
+
+head(Cont,15)
+
+
+NPDES <- read_delim("Point_Source_Wastestream_Dataset.txt", 
+    delim = "\t", escape_double = FALSE, 
+    col_types = cols(`Date-Time` = col_datetime(format = "%m/%d/%Y %H:%M"), 
+        CBOD = col_number(), DO = col_number(), 
+        FLOW = col_number(), NH3 = col_number(), 
+        NOX = col_number(), `NP RATIO` = col_number(), 
+        ORGN = col_number(), ORGP = col_number(), 
+        PO4 = col_number(), TKN = col_number(), 
+        TN = col_number(), TP = col_number(), 
+        TSS = col_number(), WTEMP = col_number()), 
+    trim_ws = TRUE)
+
+head(NPDES, 15)
+
+
+
+
+```
+
+```{r, Format, warning=FALSE, include=FALSE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE}
+
+colnames(NPDES)[1] <- "Date"
+
+NPDES$TPLoad<-NPDES$TP*0.00220462*NPDES$FLOW*86400
+
+#NPDES$TPLoad.csum <- ave(NPDES$TPLoad, NPDES$Station_ID, FUN=cumsum)
+
+NPDES$NP<-NPDES$TN/NPDES$TP
+
+NPDES1<-NPDES
+
+NPDES.Frank<-NPDES[NPDES$Station_ID=="TN0028827",]
+
+plot(NPDES$Date, NPDES$TPLoad)
+
+
+```
+
+
+
