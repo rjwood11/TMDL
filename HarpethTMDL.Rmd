@@ -283,19 +283,19 @@ Subset of `r length(unique(BaseModel$Station_ID))` modeled segments in WASP
 
 ```{r, Basic Plots, warning=FALSE, include=TRUE, echo=TRUE, error=FALSE, message=FALSE, collapse=TRUE, tidy=TRUE}
 
-ggplot(data = BaseModel, aes(x = Date, y = FLOW_CMS, group = Station_ID, colour = Station_ID)) +
-    geom_line() +
-    facet_wrap(~ Station_ID)
+#ggplot(data = BaseModel, aes(x = Date, y = FLOW_CMS, group = Station_ID, colour = Station_ID)) +
+#    geom_line() +
+#    facet_wrap(~ Station_ID)
 
 
 
 
 
 
-ggplot(data = BaseModel, aes(x = Date, y = TPLoad, group = Station_ID, colour = Station_ID, )) +
-  ylab("TP Load (lbs/day)") +
-    geom_line() +
-    facet_wrap(~ Station_ID)
+#ggplot(data = BaseModel, aes(x = Date, y = TPLoad, group = Station_ID, colour = Station_ID, )) +
+#  ylab("TP Load (lbs/day)") +
+#    geom_line() +
+#    facet_wrap(~ Station_ID)
 
 
 #Boxplot - look at data distribution
