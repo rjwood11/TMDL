@@ -16,3 +16,5 @@ HARPE062$Date <- as.POSIXct(format(HARPE062$Date,"%Y-%m-%d"))
 
 Hwy100 <- merge(HARPE062,Hwy100,by=c("Date"))
 
+
+
